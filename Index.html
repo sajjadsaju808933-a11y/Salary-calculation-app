@@ -1,1 +1,154 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary Calculation</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e2e8f0;--accent:#176b52;--accent2:#e8f5ef;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,"Noto Sans Malayalam",sans-serif;color:var(--ink);font-size:16px}
+header{background:#124c3d;color:#fff;padding:22px 16px}header h1{margin:0 0 6px;font-size:24px}header p{margin:0;color:#d7eee4}
+main{max-width:900px;margin:auto;padding:16px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.tabs button,.btn{border:0;border-radius:10px;padding:12px 15px;min-height:44px;font-weight:700;cursor:pointer;background:#e3e9ef;color:#172033}.tabs button.active,.btn.primary{background:var(--accent);color:white}.btn.secondary{background:#e8f5ef;color:#124c3d}.btn.danger{background:#fee4e2;color:#912018}
+.panel,.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}.panel h2{font-size:19px;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat span{font-size:13px;color:var(--muted);display:block}.stat strong{font-size:23px;display:block;margin-top:8px;overflow-wrap:anywhere}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{font-weight:700;font-size:14px}.field input,.field select,.field textarea{font:inherit;width:100%;min-height:44px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:var(--ink)}.field textarea{min-height:70px}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.muted{color:var(--muted);font-size:13px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.row small{display:block;color:var(--muted);margin-top:4px}.money{font-weight:700;white-space:nowrap}.hidden{display:none!important}.report-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.pill{background:var(--accent2);color:#124c3d;padding:5px 8px;border-radius:7px;font-size:12px;font-weight:700}.report-table{width:100%;border-collapse:collapse;margin-top:12px}.report-table th,.report-table td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}.report-table th{color:var(--muted)}.empty{padding:18px 0;color:var(--muted);font-size:14px}
+@media(min-width:650px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media print{body{background:white;font-size:12px}header,.tabs,.no-print,.hide-print{display:none!important}main{max-width:none;padding:0}.panel,.stat{border:0;padding:5px;margin:0 0 8px}.stats{grid-template-columns:repeat(4,1fr)}.report-table th,.report-table td{font-size:11px;padding:5px}.report-only{display:block!important}.report-title{display:block!important}}
+</style>
+</head>
+<body>
+<header><h1>Salary Calculation</h1><p>ജോലി, ശമ്പളം, പേയ്മെന്റ്, ചെലവ് എന്നിവയുടെ കണക്ക്</p></header>
+<main>
+<div class="tabs no-print" role="tablist">
+<button class="active" data-tab="dashboard">Dashboard</button><button data-tab="work">Add Work</button><button data-tab="payment">Record Payment</button><button data-tab="expense">Add Expense</button><button data-tab="report">Monthly Report / PDF</button><button data-tab="settings">Settings</button>
+</div>
 
+<section id="dashboard" class="page">
+<div class="stats">
+<div class="stat"><span>ആകെ സമ്പാദിച്ച ശമ്പളം</span><strong id="dashEarned">₹0</strong></div>
+<div class="stat"><span>ലഭിച്ച ശമ്പളം</span><strong id="dashReceived">₹0</strong></div>
+<div class="stat"><span>ഇനി ലഭിക്കാനുള്ളത്</span><strong id="dashPending">₹0</strong></div>
+<div class="stat"><span>ആകെ ചെലവ്</span><strong id="dashExpenses">₹0</strong></div>
+</div>
+<div class="panel"><h2>Shop-wise Salary</h2><div id="shopSummary" class="empty">ഇനിയും ജോലി വിവരങ്ങൾ ചേർത്തിട്ടില്ല.</div></div>
+<div class="panel"><h2>Recent Work Entries</h2><div id="recentWork" class="empty">ഇവിടെ ജോലി വിവരങ്ങൾ കാണാം.</div></div>
+</section>
+
+<section id="work" class="page hidden">
+<div class="panel"><h2>Add Work Entry</h2>
+<form id="workForm" class="grid">
+<div class="field"><label for="workDate">Date / തീയതി</label><input id="workDate" type="date" required></div>
+<div class="field"><label for="workShop">Shop / Branch</label><input id="workShop" list="shopNames" placeholder="കടയുടെ പേര്" required><datalist id="shopNames"></datalist></div>
+<div class="field"><label for="workShift">Shift</label><select id="workShift"><option value="Full Day">Full Day</option><option value="Noon">Noon</option><option value="Evening">Evening</option></select></div>
+<div class="field"><label for="workHours">Hours (Noon/Evening)</label><input id="workHours" type="number" min="0" max="24" step="0.5" value="8"></div>
+<div class="field"><label for="workSalary">Salary earned (₹)</label><input id="workSalary" type="number" min="0" step="0.01" required></div>
+<div class="field"><label for="workNote">Note (optional)</label><input id="workNote" placeholder="കുറിപ്പ്"></div>
+<div class="full muted">നിലവിലെ നിരക്ക് അനുസരിച്ച് ശമ്പളം സ്വയം വരും. ആവശ്യമെങ്കിൽ മാറ്റാം.</div>
+<div class="full actions"><button class="btn primary" type="submit">Save Work Entry</button><button class="btn" type="reset">Clear</button></div>
+</form></div>
+<div class="panel"><h2>Saved Work Entries</h2><div id="workList"></div></div>
+</section>
+
+<section id="payment" class="page hidden">
+<div class="panel"><h2>Record Payment / ശമ്പളം വാങ്ങിയത്</h2>
+<form id="paymentForm" class="grid">
+<div class="field"><label for="payDate">Date</label><input id="payDate" type="date" required></div>
+<div class="field"><label for="payShop">Shop / Branch</label><input id="payShop" list="shopNames" placeholder="കടയുടെ പേര്" required></div>
+<div class="field"><label for="payAmount">Amount received (₹)</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
+<div class="field"><label for="payMethod">Payment method</label><select id="payMethod"><option>Cash</option><option>Bank</option><option>UPI</option><option>Other</option></select></div>
+<div class="field full"><label for="payNote">Note (optional)</label><input id="payNote"></div>
+<div class="full actions"><button class="btn primary" type="submit">Save Payment</button></div>
+</form></div>
+<div class="panel"><h2>Payment History</h2><div id="paymentList"></div></div>
+</section>
+
+<section id="expense" class="page hidden">
+<div class="panel"><h2>Add Expense</h2>
+<form id="expenseForm" class="grid">
+<div class="field"><label for="expenseDate">Date</label><input id="expenseDate" type="date" required></div>
+<div class="field"><label for="expenseAmount">Amount (₹)</label><input id="expenseAmount" type="number" min="0.01" step="0.01" required></div>
+<div class="field"><label for="expenseCategory">Category</label><select id="expenseCategory"><option>Food</option><option>Travel</option><option>Shopping</option><option>Bill</option><option>Other</option></select></div>
+<div class="field full"><label for="expenseNote">Note</label><input id="expenseNote" placeholder="എന്തിനുള്ള ചെലവ്?"></div>
+<div class="full actions"><button class="btn primary" type="submit">Save Expense</button></div>
+</form></div>
+<div class="panel"><h2>Expense History</h2><div id="expenseList"></div></div>
+</section>
+
+<section id="report" class="page hidden">
+<div class="panel no-print"><h2>Shop-wise Monthly Report</h2>
+<div class="grid">
+<div class="field"><label for="reportShop">Select Shop / കട തിരഞ്ഞെടുക്കുക</label><select id="reportShop"><option value="__ALL__">All Shops / എല്ലാ കടകളും</option></select></div>
+<div class="field"><label for="reportMonth">Select Month / മാസം തിരഞ്ഞെടുക്കുക</label><input id="reportMonth" type="month"></div>
+<div class="field"><label>&nbsp;</label><button id="showReport" class="btn primary" type="button">Show Report</button></div>
+</div>
+<p class="muted">കടയും മാസവും തിരഞ്ഞെടുത്ത് റിപ്പോർട്ട് കാണുക. PDF ബട്ടൺ അമർത്തിയാൽ ഈ റിപ്പോർട്ട് മാത്രം പ്രിന്റ്/PDF ആക്കാം.</p>
+</div>
+<div id="reportContent" class="panel">
+<div class="report-head"><div><h2 class="report-title">Monthly Salary Report</h2><div id="reportSubtitle" class="muted"></div></div><span class="pill">Salary Report</span></div>
+<div class="stats">
+<div class="stat"><span>Work days / വന്ന ദിവസങ്ങൾ</span><strong id="rDays">0</strong></div>
+<div class="stat"><span>Total earned / ആകെ ശമ്പളം</span><strong id="rEarned">₹0</strong></div>
+<div class="stat"><span>Received / വാങ്ങിയത്</span><strong id="rReceived">₹0</strong></div>
+<div class="stat"><span>Pending / ഇനി കിട്ടാനുള്ളത്</span><strong id="rPending">₹0</strong></div>
+</div>
+<h3>Work History / വന്ന ദിവസങ്ങളുടെ വിവരം</h3>
+<div id="reportWork"></div>
+<h3>Payment History / വാങ്ങിയ പണത്തിന്റെ വിവരം</h3>
+<div id="reportPayments"></div>
+<div class="actions no-print"><button id="downloadCsv" class="btn secondary" type="button">Download CSV</button><button id="printPdf" class="btn primary" type="button">Print / Save PDF</button></div>
+</div>
+</section>
+
+<section id="settings" class="page hidden">
+<div class="panel"><h2>Salary Rates / ശമ്പള നിരക്കുകൾ</h2>
+<form id="settingsForm" class="grid">
+<div class="field"><label for="rateFull">Full Day (₹ per day)</label><input id="rateFull" type="number" min="0" step="0.01"></div>
+<div class="field"><label for="rateNoon">Noon (₹ per hour)</label><input id="rateNoon" type="number" min="0" step="0.01"></div>
+<div class="field"><label for="rateEvening">Evening (₹ per hour)</label><input id="rateEvening" type="number" min="0" step="0.01"></div>
+<div class="full actions"><button class="btn primary" type="submit">Save Rates</button></div>
+</form></div>
+<div class="panel"><h2>Data Backup</h2><p class="muted">നിങ്ങളുടെ ഡാറ്റ ഈ ബ്രൗസറിൽ സൂക്ഷിക്കുന്നു. മറ്റൊരു ഫോണിലേക്ക് മാറ്റാൻ Backup എടുക്കുക.</p><div class="actions"><button id="exportBackup" class="btn secondary" type="button">Export Backup (JSON)</button><label class="btn" for="importBackup" style="display:inline-flex;align-items:center">Import Backup</label><input id="importBackup" type="file" accept=".json,application/json" class="hidden"></div></div>
+</section>
+</main>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const today=new Date(); const dateString=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const currentMonth=dateString(today).slice(0,7);
+let state={work:[],payments:[],expenses:[],rates:{full:500,noon:40,evening:40}};
+try{const saved=localStorage.getItem('salaryCalculationV2');if(saved){const parsed=JSON.parse(saved);state={...state,...parsed,rates:{...state.rates,...(parsed.rates||{})}}}}catch(e){}
+const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function save(){localStorage.setItem('salaryCalculationV2',JSON.stringify(state));renderAll()}
+function sum(items,key='amount'){return items.reduce((t,x)=>t+(Number(x[key])||0),0)}
+function workEarned(list){return sum(list,'salary')}
+function shopNames(){return [...new Set([...state.work.map(x=>x.shop),...state.payments.map(x=>x.shop)].filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function setSelectOptions(select,allLabel){const old=select.value;select.innerHTML='';if(allLabel){const o=document.createElement('option');o.value='__ALL__';o.textContent=allLabel;select.appendChild(o)}shopNames().forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;select.appendChild(o)});if([...select.options].some(o=>o.value===old))select.value=old}
+function selectedReport(){const shop=$('reportShop').value||'__ALL__';const month=$('reportMonth').value||currentMonth;const inMonth=x=>(x.date||'').slice(0,7)===month;const works=state.work.filter(x=>inMonth(x)&&(shop==='__ALL__'||x.shop===shop)).sort((a,b)=>a.date.localeCompare(b.date));const pays=state.payments.filter(x=>inMonth(x)&&(shop==='__ALL__'||x.shop===shop)).sort((a,b)=>a.date.localeCompare(b.date));return {shop,month,works,pays,earned:workEarned(works),received:sum(pays),pending:workEarned(works)-sum(pays)}}
+function renderRows(el,items,kind){if(!items.length){el.innerHTML='<div class="empty">വിവരങ്ങൾ ലഭ്യമല്ല.</div>';return}el.innerHTML=items.map(x=>{let title='',sub='',amount='';if(kind==='work'){title=escapeHtml(x.shop);sub=`${escapeHtml(x.date)} · ${escapeHtml(x.shift)}${x.shift!=='Full Day'?' · '+escapeHtml(x.hours)+' hrs':''}${x.note?' · '+escapeHtml(x.note):''}`;amount=money(x.salary)}else if(kind==='payment'){title=escapeHtml(x.shop);sub=`${escapeHtml(x.date)} · ${escapeHtml(x.method||'Cash')}${x.note?' · '+escapeHtml(x.note):''}`;amount=money(x.amount)}else{title=escapeHtml(x.category);sub=`${escapeHtml(x.date)}${x.note?' · '+escapeHtml(x.note):''}`;amount=money(x.amount)}return `<div class="row"><div><strong>${title}</strong><small>${sub}</small></div><div style="text-align:right"><div class="money">${amount}</div><button class="btn danger no-print" style="padding:6px 9px;min-height:32px;margin-top:5px" type="button" data-delete="${kind}" data-id="${x.id}">Delete</button></div></div>`}).join('')}
+function renderReport(){const r=selectedReport();$('reportSubtitle').textContent=`${r.shop==='__ALL__'?'All Shops':r.shop} · ${r.month}`;$('rDays').textContent=String(r.works.length);$('rEarned').textContent=money(r.earned);$('rReceived').textContent=money(r.received);$('rPending').textContent=money(r.pending);$('reportWork').innerHTML=r.works.length?`<table class="report-table"><thead><tr><th>Date</th><th>Shift</th><th>Hours</th><th>Shop</th><th>Earned</th></tr></thead><tbody>${r.works.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.shift)}</td><td>${x.shift==='Full Day'?'—':escapeHtml(x.hours)}</td><td>${escapeHtml(x.shop)}</td><td>${money(x.salary)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">ഈ മാസത്തിൽ ജോലി വിവരങ്ങൾ ഇല്ല.</div>';$('reportPayments').innerHTML=r.pays.length?`<table class="report-table"><thead><tr><th>Date</th><th>Shop</th><th>Method</th><th>Amount received</th></tr></thead><tbody>${r.pays.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.shop)}</td><td>${escapeHtml(x.method||'Cash')}</td><td>${money(x.amount)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">ഈ മാസത്തിൽ പേയ്മെന്റ് രേഖപ്പെടുത്തിയിട്ടില്ല.</div>'}
+function renderAll(){const earned=workEarned(state.work),received=sum(state.payments),expenses=sum(state.expenses);$('dashEarned').textContent=money(earned);$('dashReceived').textContent=money(received);$('dashPending').textContent=money(earned-received);$('dashExpenses').textContent=money(expenses);
+$('shopNames').innerHTML=shopNames().map(n=>`<option value="${escapeHtml(n)}"></option>`).join('');
+const summary=shopNames().map(shop=>{const e=workEarned(state.work.filter(x=>x.shop===shop)),p=sum(state.payments.filter(x=>x.shop===shop));return `<div class="row"><div><strong>${escapeHtml(shop)}</strong><small>Earned ${money(e)} · Received ${money(p)}</small></div><strong class="money">${money(e-p)} pending</strong></div>`}).join('');$('shopSummary').innerHTML=summary||'<div class="empty">ഇനിയും ജോലി വിവരങ്ങൾ ചേർത്തിട്ടില്ല.</div>';
+renderRows($('recentWork'),state.work.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5),'work');renderRows($('workList'),state.work.slice().sort((a,b)=>b.date.localeCompare(a.date)),'work');renderRows($('paymentList'),state.payments.slice().sort((a,b)=>b.date.localeCompare(a.date)),'payment');renderRows($('expenseList'),state.expenses.slice().sort((a,b)=>b.date.localeCompare(a.date)),'expense');
+setSelectOptions($('reportShop'),'All Shops / എല്ലാ കടകളും');renderReport()}
+function calcWorkSalary(){const shift=$('workShift').value,hours=Number($('workHours').value)||0;const rate=shift==='Full Day'?Number(state.rates.full):shift==='Noon'?Number(state.rates.noon):Number(state.rates.evening);$('workSalary').value=(shift==='Full Day'?rate:rate*hours).toFixed(2);$('workHours').disabled=shift==='Full Day'}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==b.dataset.tab));if(b.dataset.tab==='report')renderReport()}));
+$('workShift').addEventListener('change',calcWorkSalary);$('workHours').addEventListener('input',()=>{if($('workShift').value!=='Full Day')calcWorkSalary()});
+$('workForm').addEventListener('submit',e=>{e.preventDefault();const shift=$('workShift').value;const shop=$('workShop').value.trim();const date=$('workDate').value;const salary=Number($('workSalary').value);if(!shop||!date||!Number.isFinite(salary)||salary<0){alert('ദയവായി ശരിയായ വിവരങ്ങൾ നൽകുക.');return}state.work.push({id:uid(),date,shop,shift,hours:shift==='Full Day'?0:Number($('workHours').value)||0,salary,note:$('workNote').value.trim()});save();e.target.reset();$('workDate').value=dateString(new Date());$('workHours').value=8;calcWorkSalary();alert('Work entry saved!')});
+$('paymentForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('payAmount').value),shop=$('payShop').value.trim(),date=$('payDate').value;if(!shop||!date||!Number.isFinite(amount)||amount<=0){alert('ദയവായി ശരിയായ വിവരങ്ങൾ നൽകുക.');return}state.payments.push({id:uid(),date,shop,amount,method:$('payMethod').value,note:$('payNote').value.trim()});save();e.target.reset();$('payDate').value=dateString(new Date());alert('Payment saved!')});
+$('expenseForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('expenseAmount').value),date=$('expenseDate').value;if(!date||!Number.isFinite(amount)||amount<=0){alert('ദയവായി ശരിയായ വിവരങ്ങൾ നൽകുക.');return}state.expenses.push({id:uid(),date,amount,category:$('expenseCategory').value,note:$('expenseNote').value.trim()});save();e.target.reset();$('expenseDate').value=dateString(new Date());alert('Expense saved!')});
+$('settingsForm').addEventListener('submit',e=>{e.preventDefault();state.rates={full:Number($('rateFull').value)||0,noon:Number($('rateNoon').value)||0,evening:Number($('rateEvening').value)||0};save();calcWorkSalary();alert('Rates saved!')});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const kind=b.dataset.delete,id=b.dataset.id;if(!confirm('ഈ രേഖ delete ചെയ്യണോ?'))return;if(kind==='work')state.work=state.work.filter(x=>x.id!==id);if(kind==='payment')state.payments=state.payments.filter(x=>x.id!==id);if(kind==='expense')state.expenses=state.expenses.filter(x=>x.id!==id);save()});
+$('showReport').addEventListener('click',renderReport);$('reportShop').addEventListener('change',renderReport);$('reportMonth').addEventListener('change',renderReport);
+$('printPdf').addEventListener('click',()=>{renderReport();window.print()});
+$('downloadCsv').addEventListener('click',()=>{const r=selectedReport();const rows=[['Monthly Salary Report',r.month],['Shop',r.shop],[],['Date','Shop','Shift','Hours','Salary Earned'],...r.works.map(x=>[x.date,x.shop,x.shift,x.hours,x.salary]),[],['Payment Date','Shop','Method','Amount Received'],...r.pays.map(x=>[x.date,x.shop,x.method,x.amount]),[],['Work days',r.works.length],['Total earned',r.earned],['Total received',r.received],['Pending',r.pending]];const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Salary-Report-${r.month}.csv`;a.click();URL.revokeObjectURL(a.href)});
+$('exportBackup').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='salary-calculation-backup.json';a.click();URL.revokeObjectURL(a.href)});
+$('importBackup').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.work)||!Array.isArray(data.payments)||!Array.isArray(data.expenses))throw new Error('Invalid');state={...state,...data,rates:{...state.rates,...(data.rates||{})}};save();alert('Backup imported successfully')}catch(err){alert('ഈ backup file വായിക്കാൻ കഴിഞ്ഞില്ല.')}e.target.value=''});
+$('rateFull').value=state.rates.full;$('rateNoon').value=state.rates.noon;$('rateEvening').value=state.rates.evening;
+['workDate','payDate','expenseDate'].forEach(id=>$(id).value=dateString(new Date()));$('reportMonth').value=currentMonth;
+calcWorkSalary();renderAll();
+})();
+</script>
+</body>
+                           </html>
